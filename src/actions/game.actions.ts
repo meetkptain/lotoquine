@@ -213,21 +213,20 @@ export async function saveDrawnNumbersAction(
   }
 }
 
-function parseTursoUrl(url: string): { dbName: string; branch: string; org: string; region: string } {
-  const clean = url.replace(/^libsql:\/\//, "")
-  const parts = clean.split(".")[0]
-  const revParts = parts.split("-").reverse()
-  const org = revParts[0]
-  const rest = revParts.slice(1).join("-")
-  const parts2 = rest.split("-")
-  const maybeBranch = parts2.length > 1 ? parts2.slice(0, -1).join("-") : undefined
-  const dbName = parts2[parts2.length - 1] ?? rest
-  return {
-    dbName,
-    branch: maybeBranch ?? "main",
-    org,
-    region: url.includes("turso.io") ? "unknown" : "unknown",
+function parseTursoUrl(url: string): { dbName: string; branch: string; org: string } {
+  const clean = url.replace(/^libsql:\/\//, "").split(".")[0]
+  const hasDoubleDash = clean.includes("--")
+  if (hasDoubleDash) {
+    const [dbName, rest] = clean.split("--")
+    const parts = rest.split("-")
+    const org = parts[parts.length - 1] ?? ""
+    const branch = parts.slice(0, -1).join("-") || "main"
+    return { dbName, branch, org }
   }
+  const parts = clean.split("-")
+  const org = parts[parts.length - 1] ?? ""
+  const dbName = parts.slice(0, -1).join("-") || clean
+  return { dbName, branch: "main", org }
 }
 
 export async function getDbInfoAction() {
