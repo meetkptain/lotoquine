@@ -462,9 +462,9 @@ export default function LivePage() {
         )}
 
         {/* Two-column layout on md+ */}
-        <div className="flex flex-col md:flex-row gap-3 md:gap-6 flex-1 min-h-0">
+        <div className="flex flex-col md:flex-row gap-3 md:gap-6 flex-1 min-h-0 overflow-hidden">
           {/* Left column — grid + controls */}
-          <div className="md:w-[58%] flex flex-col gap-3 min-w-0">
+          <div className="md:w-[60%] flex flex-col gap-3 min-w-0 overflow-y-auto">
             {/* Last number + counts */}
             <div className="flex items-center justify-between">
               <div className="text-center">
@@ -550,14 +550,14 @@ export default function LivePage() {
             </div>
           </div>
 
-          {/* Right column — top cards en mini chips 2 colonnes */}
-          <div className="md:w-[42%] flex flex-col gap-1.5 min-h-0">
-            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium">TOP CARTONS</p>
+          {/* Right column — top cards full height */}
+          <div className="md:w-[40%] flex flex-col min-h-0 overflow-hidden">
+            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium shrink-0">TOP CARTONS</p>
             <div className="flex-1 overflow-y-auto min-h-0">
               {topCards.length === 0 ? (
-                <p className="text-xs text-muted-foreground">En attente des tirages...</p>
+                <p className="text-xs text-muted-foreground p-2">En attente des tirages...</p>
               ) : (
-                <div className="grid grid-cols-2 gap-1">
+                <div className="grid grid-cols-2 gap-1 p-0.5">
                   {topCards.map((card, i) => {
                     const pct = Math.round((card.foundCount / card.totalCount) * 100)
                     const isWinner = winner?.cardId === card.cardId
