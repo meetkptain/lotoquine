@@ -23,16 +23,21 @@ export default function DashboardPage() {
   const [games, setGames] = useState<Game[]>([])
   const [cardCount, setCardCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [dbInfo, setDbInfo] = useState<{
+    dbName: string; branch: string; org: string; url: string
+  } | null>(null)
 
   const load = useCallback(async () => {
     try {
-      const { getGamesAction, getCardStatsAction } = await import("@/actions/game.actions")
-      const [allGames, stats] = await Promise.all([
+      const { getGamesAction, getCardStatsAction, getDbInfoAction } = await import("@/actions/game.actions")
+      const [allGames, stats, info] = await Promise.all([
         getGamesAction(),
         getCardStatsAction(),
+        getDbInfoAction(),
       ])
       setGames(allGames.reverse().slice(0, 10))
       setCardCount(stats.active)
+      setDbInfo(info)
     } catch (e) {
       console.error("Failed to load dashboard data", e)
     } finally {
@@ -95,6 +100,19 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {dbInfo && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Base de données</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm space-y-1">
+            <p><span className="text-muted-foreground">DB:</span> {dbInfo.dbName}</p>
+            <p><span className="text-muted-foreground">Branch:</span> <span className={dbInfo.branch === "main" ? "text-green-600 font-medium" : "text-yellow-600 font-medium"}>{dbInfo.branch}</span></p>
+            <p className="text-xs text-muted-foreground truncate">{dbInfo.url}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {activeGame && (
         <Card className="border-primary/50 animate-glow-pulse">

@@ -212,3 +212,35 @@ export async function saveDrawnNumbersAction(
     await gameRepo.finishGame(gameId, winnerCardId)
   }
 }
+
+function parseTursoUrl(url: string): { dbName: string; branch: string; org: string; region: string } {
+  const clean = url.replace(/^libsql:\/\//, "")
+  const parts = clean.split(".")[0]
+  const revParts = parts.split("-").reverse()
+  const org = revParts[0]
+  const rest = revParts.slice(1).join("-")
+  const parts2 = rest.split("-")
+  const maybeBranch = parts2.length > 1 ? parts2.slice(0, -1).join("-") : undefined
+  const dbName = parts2[parts2.length - 1] ?? rest
+  return {
+    dbName,
+    branch: maybeBranch ?? "main",
+    org,
+    region: url.includes("turso.io") ? "unknown" : "unknown",
+  }
+}
+
+export async function getDbInfoAction() {
+  const rawUrl = process.env.TURSO_DB_URL ?? process.env.TURSO_DATABASE_URL ?? ""
+  const hasAuth = !!(process.env.TURSO_DB_AUTH_TOKEN ?? process.env.TURSO_AUTH_TOKEN)
+  const parsed = rawUrl ? parseTursoUrl(rawUrl) : null
+  return {
+    url: rawUrl.replace(/\/\/[^@]+@/, "//***@"),
+    masked: rawUrl.replace(/authToken=[^&]+/, "authToken=***"),
+    configured: !!rawUrl,
+    hasAuth,
+    dbName: parsed?.dbName ?? "",
+    branch: parsed?.branch ?? "",
+    org: parsed?.org ?? "",
+  }
+}
