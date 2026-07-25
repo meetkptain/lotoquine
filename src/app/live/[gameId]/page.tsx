@@ -360,7 +360,7 @@ export default function LivePage() {
           <Timer className="w-3 h-3" />
           <span className="tabular-nums">{formatTime(elapsed)}</span>
           <span className="ml-1 hidden sm:inline">{activeCardCount} cartons</span>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={handleStartNewGame} disabled={startingNew}>
+          <Button variant="ghost" size="sm" className="h-11 px-3 text-xs gap-1.5" onClick={handleStartNewGame} disabled={startingNew}>
             <Plus className="w-3 h-3" /> Nouvelle
           </Button>
           <button onClick={() => setShowHelp(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Aide (?)" type="button">
@@ -378,7 +378,7 @@ export default function LivePage() {
                 <Pause className="w-7 h-7 text-muted-foreground" />
               </div>
               <h2 className="text-xl font-bold">PARTIE EN PAUSE</h2>
-              <p className="text-sm text-muted-foreground">ESPACE pour reprendre</p>
+              <Button variant="default" size="lg" onClick={togglePause}>Reprendre</Button>
             </div>
           </div>
         )}
@@ -388,22 +388,25 @@ export default function LivePage() {
           <div className="absolute inset-0 z-30 bg-background/90 flex items-center justify-center rounded-lg" onClick={() => setShowHelp(false)}>
             <Card className="max-w-sm mx-auto" onClick={(e) => e.stopPropagation()}>
               <CardContent className="p-6 space-y-3">
-                <h3 className="font-bold text-lg">Raccourcis clavier</h3>
-                <div className="space-y-1.5 text-sm">
-                  {[
-                    ["ENTRÉE", "Valider le numéro"],
-                    ["ESC", "Annuler le dernier tirage"],
-                    ["ESPACE", "Pause / Reprise"],
-                    ["F", "Plein écran"],
-                    ["N", "Nouvelle partie (après gagnant)"],
-                    ["? / H", "Cette aide"],
-                    ["C", "Continuer la partie (après gagnant)"],
-                  ].map(([key, desc]) => (
-                    <div key={key} className="flex justify-between gap-4">
-                      <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono font-bold">{key}</kbd>
-                      <span className="text-muted-foreground">{desc}</span>
-                    </div>
-                  ))}
+                <h3 className="font-bold text-lg">Aide</h3>
+                <div className="space-y-2 text-sm">
+                  <p className="text-muted-foreground">Tapez un numéro dans la grille pour le tirer.</p>
+                  <div className="space-y-1.5 text-sm border-t border-border pt-2">
+                    <p className="font-medium text-xs text-muted-foreground">Raccourcis</p>
+                    {[
+                      ["ESC", "Annuler le dernier tirage"],
+                      ["ESPACE", "Pause / Reprise"],
+                      ["F", "Plein écran"],
+                      ["N", "Nouvelle partie"],
+                      ["? / H", "Cette aide"],
+                      ["C", "Continuer la partie (après gagnant)"],
+                    ].map(([key, desc]) => (
+                      <div key={key} className="flex justify-between gap-4">
+                        <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono font-bold">{key}</kbd>
+                        <span className="text-muted-foreground">{desc}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <Button variant="outline" size="sm" className="w-full" onClick={() => setShowHelp(false)}>
                   Fermer
@@ -435,17 +438,35 @@ export default function LivePage() {
           </div>
         )}
 
-        {/* Number grid — 1 to 90, tap to draw */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">
-              Tirés : {drawnNumbers.length}/90
-            </p>
-            <span className="text-lg font-bold tabular-nums text-primary">
-              #{lastNumber ?? "—"}
-            </span>
+        {/* Last number — big display */}
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Dernier numéro</p>
+          <div className={`text-5xl sm:text-6xl font-bold tabular-nums transition-all duration-150 ${lastNumber ? "text-primary scale-100" : "text-muted-foreground/30 scale-95"}`}>
+            {lastNumber ? String(lastNumber).padStart(2, "0") : "—"}
           </div>
-          <div className="grid grid-cols-10 gap-1 sm:gap-1.5">
+          <p className="text-[10px] text-muted-foreground">{drawnNumbers.length}/90 tirés</p>
+        </div>
+
+        {/* Mini history — last numbers in order */}
+        {drawnNumbers.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 justify-center">
+            {drawnNumbers.slice(-10).map((n, i) => (
+              <span
+                key={i}
+                className={`inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-mono font-bold ${
+                  i === drawnNumbers.slice(-10).length - 1
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {String(n).padStart(2, "0")}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Number grid — 1 to 90, tap to draw */}
+        <div className="grid grid-cols-10 gap-1.5">
             {Array.from({ length: 90 }, (_, i) => {
               const num = i + 1
               const drawn = drawnNumbers.includes(num)
@@ -455,15 +476,15 @@ export default function LivePage() {
                   key={num}
                   type="button"
                   className={`
-                    aspect-square rounded-md text-sm sm:text-base font-mono font-bold
+                    aspect-square rounded-md                     text-base font-mono font-bold
                     transition-all duration-100 active:scale-90
                     flex items-center justify-center
                     touch-manipulation select-none
-                    w-full min-h-[36px] sm:min-h-[44px]
+                    w-full min-h-11
                     ${drawn
                       ? isLast
                         ? "bg-primary text-primary-foreground ring-2 ring-primary/40 scale-110 z-10"
-                        : "bg-muted text-muted-foreground/40 line-through"
+                        : "bg-muted text-muted-foreground/70 line-through"
                       : "bg-card border border-border text-foreground hover:bg-accent active:bg-accent"
                     }
                   `}
@@ -480,7 +501,6 @@ export default function LivePage() {
               )
             })}
           </div>
-        </div>
 
         {/* Bottom controls */}
         <div className="flex gap-2 items-center">
@@ -523,7 +543,7 @@ export default function LivePage() {
 
         {/* Top Cards */}
         <div className="flex-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">TOP CARTONS</p>
+          <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1.5 font-medium">TOP CARTONS</p>
           <div className="space-y-1.5 max-h-[50vh] sm:max-h-[calc(100vh-420px)] overflow-y-auto">
             {topCards.length === 0 ? (
               <p className="text-xs text-muted-foreground">En attente des tirages...</p>
