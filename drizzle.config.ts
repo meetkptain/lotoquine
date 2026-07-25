@@ -5,7 +5,7 @@ export default defineConfig({
   out: "./src/db/migrations",
   dialect: "sqlite",
   dbCredentials: {
-    url: process.env.TURSO_DB_URL!,
-    authToken: process.env.TURSO_DB_AUTH_TOKEN,
+    url: process.env.TURSO_DB_URL ?? process.env.TURSO_DATABASE_URL!,
+    authToken: process.env.TURSO_DB_AUTH_TOKEN ?? process.env.TURSO_AUTH_TOKEN,
   },
 })

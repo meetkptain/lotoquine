@@ -7,9 +7,9 @@ let db: ReturnType<typeof drizzle<typeof schema>> | null = null
 
 export function getTursoClient() {
   if (!client) {
-    const url = process.env.TURSO_DB_URL
-    const authToken = process.env.TURSO_DB_AUTH_TOKEN
-    if (!url) throw new Error("TURSO_DB_URL is not set")
+    const url = process.env.TURSO_DB_URL ?? process.env.TURSO_DATABASE_URL
+    const authToken = process.env.TURSO_DB_AUTH_TOKEN ?? process.env.TURSO_AUTH_TOKEN
+    if (!url) throw new Error("TURSO_DB_URL or TURSO_DATABASE_URL is not set")
     client = createClient({ url, authToken })
   }
   return client
