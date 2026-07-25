@@ -44,7 +44,7 @@ describe("ScoreCalculator", () => {
     expect(calc.getFoundCount(2)).toBe(1)
 
     calc.markNumber(new Set([1]))
-    const top = calc.getTopCards(3)
+    const top = calc.getTopCards()
     expect(top[0].cardId).toBe(1)
     expect(top[0].foundCount).toBe(2)
     expect(top[1].foundCount).toBe(1)
@@ -136,7 +136,7 @@ describe("GameEngine", () => {
     expect(result.winner).not.toBeNull()
     expect(result.winner!.cardId).toBe(1)
     expect(result.winner!.foundCount).toBe(3)
-    expect(engine.isFinished()).toBe(true)
+    expect(engine.isFinished()).toBe(false)
   })
 
   it("supports undo", () => {

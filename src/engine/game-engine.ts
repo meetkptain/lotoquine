@@ -65,7 +65,7 @@ export class GameEngine {
     this.calculator.markNumber(affectedCardIds)
 
     const position = this.drawnNumbers.length
-    const topCards = this.calculator.getTopCards(3)
+    const topCards = this.calculator.getTopCards()
     const winner = this.detector.findWinner(topCards)
 
     // Record winner but NEVER stop the game automatically.
@@ -100,7 +100,7 @@ export class GameEngine {
     // Clear last winner — undo might have fixed it
     this._lastWinner = null
 
-    const topCards = this.calculator.getTopCards(3)
+    const topCards = this.calculator.getTopCards()
     const winner = null
 
     return {
@@ -130,7 +130,7 @@ export class GameEngine {
       gameName: this.gameName,
       status: this.status,
       drawnNumbers: [...this.drawnNumbers],
-      topCards: this.calculator.getTopCards(3),
+      topCards: this.calculator.getTopCards(),
       winner,
       activeCardCount: this.index.getTotalCards(),
     }
@@ -148,8 +148,8 @@ export class GameEngine {
     return [...this.drawnNumbers]
   }
 
-  getTopCards(limit: number = 3): CardRanking[] {
-    return this.calculator.getTopCards(limit)
+  getTopCards(): CardRanking[] {
+    return this.calculator.getTopCards()
   }
 
   continueGame(): void {

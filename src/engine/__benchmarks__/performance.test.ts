@@ -72,7 +72,7 @@ describe("Performance Benchmarks", () => {
 
       const elapsed = measure(() => {
         for (let i = 0; i < 100; i++) {
-          calc.getTopCards(10)
+          calc.getTopCards()
         }
       })
 

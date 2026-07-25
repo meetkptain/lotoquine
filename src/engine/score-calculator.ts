@@ -51,14 +51,11 @@ export class ScoreCalculator {
   private dirty = true
   private cachedTop: CardRanking[] = []
 
-  getTopCards(limit: number): CardRanking[] {
-    if (!this.dirty && this.cachedTop.length === limit) {
-      return this.cachedTop
-    }
+  getTopCards(): CardRanking[] {
+    if (!this.dirty) return this.cachedTop
 
     const entries: CardRanking[] = []
     for (const [cardId, foundCount] of this.scores) {
-      if (foundCount === 0) continue
       const totalCount = this.totalCounts.get(cardId) ?? 0
       const serialNumber = this.cardSerials.get(cardId) ?? "UNKNOWN"
       entries.push({ cardId, serialNumber, foundCount, totalCount })
@@ -69,7 +66,7 @@ export class ScoreCalculator {
       return a.serialNumber.localeCompare(b.serialNumber)
     })
 
-    this.cachedTop = entries.slice(0, limit)
+    this.cachedTop = entries
     this.dirty = false
     return this.cachedTop
   }

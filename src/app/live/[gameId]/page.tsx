@@ -559,7 +559,6 @@ export default function LivePage() {
               ) : (
                 <div className="grid grid-cols-2 gap-1 p-0.5">
                   {topCards.map((card, i) => {
-                    const pct = Math.round((card.foundCount / card.totalCount) * 100)
                     const isWinner = winner?.cardId === card.cardId
                     const isTop = i === 0
                     return (
@@ -571,11 +570,8 @@ export default function LivePage() {
                           {card.serialNumber}
                         </span>
                         <span className={`text-xs font-bold tabular-nums shrink-0 ml-auto ${isWinner ? "text-yellow-500" : ""}`}>
-                          {pct}%
+                          {card.foundCount}/{card.totalCount}
                         </span>
-                        <div className="w-4 h-1.5 bg-muted rounded-full shrink-0 overflow-hidden">
-                          <div className={`h-full rounded-full transition-all duration-300 ${isWinner ? "bg-yellow-500" : "bg-primary"}`} style={{ width: `${pct}%` }} />
-                        </div>
                       </div>
                     )
                   })}
