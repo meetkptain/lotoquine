@@ -475,7 +475,7 @@ export default function LivePage() {
         {/* Two-column layout on md+ */}
         <div className="flex flex-col md:flex-row gap-3 md:gap-6 flex-1 min-h-0">
           {/* Left column — grid + controls */}
-          <div className="md:w-[60%] lg:w-[65%] flex flex-col gap-3 min-w-0">
+          <div className="md:w-[58%] flex flex-col gap-3 min-w-0">
             {/* Last number — big display */}
             <div className="flex flex-col items-center gap-1">
               <div className={`text-4xl sm:text-5xl font-bold tabular-nums transition-all duration-150 ${lastNumber ? "text-primary scale-100" : "text-muted-foreground/30 scale-95"}`}>
@@ -551,39 +551,36 @@ export default function LivePage() {
             </div>
           </div>
 
-          {/* Right column — top cards always visible */}
-          <div className="md:w-[40%] lg:w-[35%] flex flex-col gap-2 min-h-0">
+          {/* Right column — top cards en mini chips 2 colonnes */}
+          <div className="md:w-[42%] flex flex-col gap-1.5 min-h-0">
             <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium">TOP CARTONS</p>
-            <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0">
+            <div className="flex-1 overflow-y-auto min-h-0">
               {topCards.length === 0 ? (
                 <p className="text-xs text-muted-foreground">En attente des tirages...</p>
               ) : (
-                topCards.map((card, i) => {
-                  const pct = Math.round((card.foundCount / card.totalCount) * 100)
-                  const isTop = i === 0
-                  const isWinner = winner?.cardId === card.cardId
-                  return (
-                    <Card key={card.cardId} className={`transition-all ${isWinner ? "border-yellow-500 ring-2 ring-yellow-500/30 animate-glow-pulse" : isTop ? "border-primary/40" : "hover:bg-accent/50"}`}>
-                      <CardContent className="flex items-center gap-3 py-2.5 px-3">
-                        <span className={`text-sm font-bold shrink-0 w-5 text-center ${isWinner ? "text-yellow-500" : isTop ? "text-primary" : "text-muted-foreground"}`}>
-                          #{i + 1}
+                <div className="grid grid-cols-2 gap-1">
+                  {topCards.map((card, i) => {
+                    const pct = Math.round((card.foundCount / card.totalCount) * 100)
+                    const isWinner = winner?.cardId === card.cardId
+                    const isTop = i === 0
+                    return (
+                      <div key={card.cardId} className={`flex items-center gap-1 rounded px-1 py-1 min-w-0 ${isWinner ? "bg-yellow-500/15 ring-1 ring-yellow-500/40 animate-glow-pulse" : isTop ? "bg-primary/5" : ""}`}>
+                        <span className={`text-xs font-bold w-4 text-center shrink-0 ${isWinner ? "text-yellow-500" : isTop ? "text-primary" : "text-muted-foreground"}`}>
+                          {i + 1}
                         </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="font-mono text-sm font-medium truncate">{card.serialNumber}</p>
-                            <p className="text-sm font-bold tabular-nums shrink-0">{pct}%</p>
-                          </div>
-                          <div className="mt-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full transition-all duration-300 ${isWinner ? "bg-yellow-500" : "bg-primary"}`} style={{ width: `${pct}%` }} />
-                          </div>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            {card.foundCount}/{card.totalCount} numéros
-                          </p>
+                        <span className={`font-mono text-xs font-medium truncate ${isWinner ? "font-bold" : ""}`}>
+                          {card.serialNumber}
+                        </span>
+                        <span className={`text-xs font-bold tabular-nums shrink-0 ml-auto ${isWinner ? "text-yellow-500" : ""}`}>
+                          {pct}%
+                        </span>
+                        <div className="w-4 h-1.5 bg-muted rounded-full shrink-0 overflow-hidden">
+                          <div className={`h-full rounded-full transition-all duration-300 ${isWinner ? "bg-yellow-500" : "bg-primary"}`} style={{ width: `${pct}%` }} />
                         </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </div>
           </div>
