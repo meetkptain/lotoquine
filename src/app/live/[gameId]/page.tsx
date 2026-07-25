@@ -352,7 +352,7 @@ export default function LivePage() {
           <span className="font-bold text-primary tracking-tight text-sm sm:text-base">LOTOQUINE</span>
           <span className="text-xs text-muted-foreground">|</span>
           <span className="text-xs sm:text-sm font-medium truncate">{game.name}</span>
-          <Badge variant={status === "running" ? "default" : status === "finished" ? "outline" : "secondary"} className="text-[9px] px-1.5 py-0">
+          <Badge variant={status === "running" ? "default" : status === "finished" ? "outline" : "secondary"} className="text-xs px-2 py-0.5">
             {status === "running" ? "EN DIRECT" : status === "paused" ? "EN PAUSE" : status === "finished" ? "TERMINÉ" : "PRÊT"}
           </Badge>
         </div>
@@ -363,8 +363,8 @@ export default function LivePage() {
           <Button variant="ghost" size="sm" className="h-11 px-3 text-xs gap-1.5" onClick={handleStartNewGame} disabled={startingNew}>
             <Plus className="w-3 h-3" /> Nouvelle
           </Button>
-          <button onClick={() => setShowHelp(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Aide (?)" type="button">
-            <HelpCircle className="w-3.5 h-3.5" />
+          <button onClick={() => setShowHelp(true)} className="p-2.5 rounded-lg hover:bg-muted transition-colors min-h-11 min-w-11 flex items-center justify-center" title="Aide (?)" type="button">
+            <HelpCircle className="w-5 h-5" />
           </button>
         </div>
       </header>
@@ -418,163 +418,174 @@ export default function LivePage() {
 
         {/* Full winner screen when operator clicked "Arrêter" */}
         {status === "finished" && winner && (
-          <div className="absolute inset-0 z-20 bg-background/90 flex items-center justify-center rounded-lg">
-            <Card className="border-primary animate-glow-pulse max-w-sm mx-auto">
-              <CardContent className="py-8 text-center space-y-4">
-                <Trophy className="w-14 h-14 text-yellow-500 mx-auto animate-bounce" />
-                <h2 className="text-3xl font-bold text-primary">GAGNANT</h2>
-                <p className="text-2xl font-mono font-bold">{winner.serialNumber}</p>
-                <p className="text-sm text-muted-foreground">{winner.foundCount}/{winner.totalCount} numéros trouvés</p>
-                <div className="flex flex-col gap-2 pt-2">
-                  <Button size="lg" className="w-full text-base h-14" onClick={handleStartNewGame} disabled={startingNew}>
-                    <Sparkles className="w-5 h-5 mr-2" /> Nouvelle partie
-                  </Button>
-                  <Button variant="outline" size="lg" className="w-full text-base h-12" onClick={() => { setStatus("running"); setWinner(null) }}>
-                    <ArrowRight className="w-5 h-5 mr-2" /> Continuer cette partie
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="absolute inset-0 z-20 bg-yellow-500/10 flex items-center justify-center rounded-lg">
+            <div className="text-center space-y-6 px-6">
+              <div className="animate-bounce">
+                <Trophy className="w-20 h-20 sm:w-28 sm:h-28 text-yellow-500 mx-auto drop-shadow-lg" />
+              </div>
+              <h2 className="text-5xl sm:text-7xl font-extrabold text-yellow-500 tracking-tight drop-shadow-md animate-pulse">
+                GAGNANT
+              </h2>
+              <p className="text-3xl sm:text-5xl font-mono font-bold text-foreground">
+                {winner.serialNumber}
+              </p>
+              <p className="text-base sm:text-lg text-muted-foreground">
+                {winner.foundCount}/{winner.totalCount} numéros
+              </p>
+              <div className="flex flex-col gap-3 pt-4 max-w-xs mx-auto">
+                <Button size="lg" className="w-full text-lg h-16 font-bold" onClick={handleStartNewGame} disabled={startingNew}>
+                  <Sparkles className="w-6 h-6 mr-2" /> Nouvelle partie
+                </Button>
+                <Button variant="outline" size="lg" className="w-full text-base h-14" onClick={() => { setStatus("running"); setWinner(null) }}>
+                  <ArrowRight className="w-5 h-5 mr-2" /> Continuer
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Last number — big display */}
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Dernier numéro</p>
-          <div className={`text-5xl sm:text-6xl font-bold tabular-nums transition-all duration-150 ${lastNumber ? "text-primary scale-100" : "text-muted-foreground/30 scale-95"}`}>
-            {lastNumber ? String(lastNumber).padStart(2, "0") : "—"}
-          </div>
-          <p className="text-[10px] text-muted-foreground">{drawnNumbers.length}/90 tirés</p>
-        </div>
-
-        {/* Mini history — last numbers in order */}
-        {drawnNumbers.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 justify-center">
-            {drawnNumbers.slice(-10).map((n, i) => (
-              <span
-                key={i}
-                className={`inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-mono font-bold ${
-                  i === drawnNumbers.slice(-10).length - 1
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {String(n).padStart(2, "0")}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Number grid — 1 to 90, tap to draw */}
-        <div className="grid grid-cols-10 gap-1.5">
-            {Array.from({ length: 90 }, (_, i) => {
-              const num = i + 1
-              const drawn = drawnNumbers.includes(num)
-              const isLast = num === lastNumber
-              return (
-                <button
-                  key={num}
-                  type="button"
-                  className={`
-                    aspect-square rounded-md                     text-base font-mono font-bold
-                    transition-all duration-100 active:scale-90
-                    flex items-center justify-center
-                    touch-manipulation select-none
-                    w-full min-h-11
-                    ${drawn
-                      ? isLast
-                        ? "bg-primary text-primary-foreground ring-2 ring-primary/40 scale-110 z-10"
-                        : "bg-muted text-muted-foreground/70 line-through"
-                      : "bg-card border border-border text-foreground hover:bg-accent active:bg-accent"
-                    }
-                  `}
-                  onClick={() => {
-                    if (!drawn) {
-                      setInputValue(String(num))
-                      handleDraw()
-                    }
-                  }}
-                  aria-label={`Numéro ${num}${drawn ? " (déjà tiré)" : ""}`}
-                >
-                  {num}
-                </button>
-              )
-            })}
-          </div>
-
-        {/* Bottom controls */}
-        <div className="flex gap-2 items-center">
-          <Button variant="outline" className="h-12 flex-1 text-sm" onClick={handleUndo} disabled={drawnNumbers.length === 0}>
-            <Undo2 className="w-4 h-4 mr-1.5" /> Annuler
-          </Button>
-          <Button variant="outline" className="h-12 flex-1 text-sm" onClick={togglePause}>
-            <Pause className="w-4 h-4 mr-1.5" /> Pause
-          </Button>
-        </div>
-
-        {/* Winner banner — non-blocking, game keeps running */}
-        {winner && (
-          <div className="rounded-xl border-2 border-yellow-500/50 bg-yellow-500/10 p-3 sm:p-4 flex items-center gap-3 animate-glow-pulse">
-            <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-500 shrink-0" />
+        {/* Winner banner — non-blocking, full width */}
+        {winner && status !== "finished" && (
+          <div className="rounded-xl border-2 border-yellow-500 bg-yellow-500/20 p-4 sm:p-5 flex items-center gap-4 animate-glow-pulse shadow-lg shadow-yellow-500/20">
+            <Trophy className="w-10 h-10 sm:w-14 sm:h-14 text-yellow-500 shrink-0 drop-shadow" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-bold text-yellow-500 uppercase tracking-wider">Carton plein</p>
-              <p className="font-mono text-lg sm:text-xl font-bold">{winner.serialNumber}</p>
-              <p className="text-xs text-muted-foreground">{winner.foundCount}/{winner.totalCount} numéros trouvés</p>
+              <p className="font-bold text-yellow-500 uppercase tracking-wider text-sm sm:text-base">Carton plein</p>
+              <p className="font-mono text-xl sm:text-2xl font-bold">{winner.serialNumber}</p>
             </div>
             <div className="flex gap-2 shrink-0">
-              <Button className="h-10 sm:h-12 px-3 sm:px-4 text-xs sm:text-sm" variant="default" onClick={() => { engine?.continueGame(); setWinner(null) }}>
-                <ArrowRight className="w-4 h-4 mr-1" /> Continuer
+              <Button className="h-12 px-4 text-sm font-bold" variant="default" onClick={() => { engine?.continueGame(); setWinner(null) }}>
+                Continuer
               </Button>
-              <Button className="h-10 sm:h-12 px-3 sm:px-4 text-xs sm:text-sm" variant="destructive" onClick={() => { engine?.continueGame(); setStatus("finished"); setWinner(winner) }}>
+              <Button className="h-12 px-4 text-sm font-bold" variant="destructive" onClick={() => { engine?.continueGame(); setStatus("finished"); setWinner(winner) }}>
                 Arrêter
               </Button>
-              <Button variant="ghost" size="icon" className="h-10 sm:h-12 w-10 sm:w-12" onClick={async () => {
+              <Button variant="ghost" size="icon" className="h-12 w-12" onClick={async () => {
                 try {
                   const { getCardWithNumbersAction } = await import("@/actions/game.actions")
                   const detail = await getCardWithNumbersAction(winner.cardId)
                   if (detail) openEditCard(detail.id, detail.serialNumber, detail.numbers)
                 } catch {}
               }} title="Corriger le carton">
-                <Pencil className="w-4 h-4" />
+                <Pencil className="w-5 h-5" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* Top Cards */}
-        <div className="flex-1">
-          <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1.5 font-medium">TOP CARTONS</p>
-          <div className="space-y-1.5 max-h-[50vh] sm:max-h-[calc(100vh-420px)] overflow-y-auto">
-            {topCards.length === 0 ? (
-              <p className="text-xs text-muted-foreground">En attente des tirages...</p>
-            ) : (
-              topCards.map((card, i) => {
-                const pct = Math.round((card.foundCount / card.totalCount) * 100)
-                const isTop = i === 0
-                const isWinner = winner?.cardId === card.cardId
-                return (
-                  <Card key={card.cardId} className={`transition-all ${isWinner ? "border-yellow-500 animate-glow-pulse" : isTop ? "border-primary/40" : "hover:bg-accent/50"}`}>
-                    <CardContent className="flex items-center gap-3 py-2.5 px-3">
-                      <span className={`text-sm font-bold shrink-0 w-5 text-center ${isWinner ? "text-yellow-500" : isTop ? "text-primary" : "text-muted-foreground"}`}>
-                        #{i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-mono text-sm font-medium truncate">{card.serialNumber}</p>
-                          <p className="text-sm font-bold tabular-nums shrink-0">{pct}%</p>
-                        </div>
-                        <div className="mt-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full transition-all duration-300 ${isWinner ? "bg-yellow-500" : "bg-primary"}`} style={{ width: `${pct}%` }} />
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {card.foundCount}/{card.totalCount} numéros
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })
+        {/* Two-column layout on md+ */}
+        <div className="flex flex-col md:flex-row gap-3 md:gap-6 flex-1 min-h-0">
+          {/* Left column — grid + controls */}
+          <div className="md:w-[60%] lg:w-[65%] flex flex-col gap-3 min-w-0">
+            {/* Last number — big display */}
+            <div className="flex flex-col items-center gap-1">
+              <div className={`text-4xl sm:text-5xl font-bold tabular-nums transition-all duration-150 ${lastNumber ? "text-primary scale-100" : "text-muted-foreground/30 scale-95"}`}>
+                {lastNumber ? String(lastNumber).padStart(2, "0") : "—"}
+              </div>
+              <p className="text-[10px] text-muted-foreground">{drawnNumbers.length}/90 tirés</p>
+            </div>
+
+            {/* Mini history — last numbers in order */}
+            {drawnNumbers.length > 0 && (
+              <div className="flex flex-wrap gap-1 justify-center">
+                {drawnNumbers.slice(-10).map((n, i) => (
+                  <span
+                    key={i}
+                    className={`inline-flex items-center justify-center w-7 h-7 rounded-md text-[10px] font-mono font-bold ${
+                      i === drawnNumbers.slice(-10).length - 1
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {String(n).padStart(2, "0")}
+                  </span>
+                ))}
+              </div>
             )}
+
+            {/* Number grid — 1 to 90, tap to draw */}
+            <div className="grid grid-cols-10 gap-1 md:gap-1">
+              {Array.from({ length: 90 }, (_, i) => {
+                const num = i + 1
+                const drawn = drawnNumbers.includes(num)
+                const isLast = num === lastNumber
+                return (
+                  <button
+                    key={num}
+                    type="button"
+                    className={`
+                      aspect-square rounded
+                      text-sm md:text-xs lg:text-sm font-mono font-bold
+                      transition-all duration-100 active:scale-90
+                      flex items-center justify-center
+                      touch-manipulation select-none
+                      w-full min-h-10 md:min-h-9
+                      ${drawn
+                        ? isLast
+                          ? "bg-primary text-primary-foreground ring-2 ring-primary/40 scale-110 z-10"
+                          : "bg-muted text-muted-foreground/70 line-through"
+                        : "bg-card border border-border text-foreground hover:bg-accent active:bg-accent"
+                      }
+                    `}
+                    onClick={() => {
+                      if (!drawn) {
+                        setInputValue(String(num))
+                        handleDraw()
+                      }
+                    }}
+                    aria-label={`Numéro ${num}${drawn ? " (déjà tiré)" : ""}`}
+                  >
+                    {num}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Bottom controls */}
+            <div className="flex gap-2 items-center">
+              <Button variant="outline" className="h-11 flex-1 text-sm" onClick={handleUndo} disabled={drawnNumbers.length === 0}>
+                <Undo2 className="w-4 h-4 mr-1.5" /> Annuler
+              </Button>
+              <Button variant="outline" className="h-11 flex-1 text-sm" onClick={togglePause}>
+                <Pause className="w-4 h-4 mr-1.5" /> Pause
+              </Button>
+            </div>
+          </div>
+
+          {/* Right column — top cards always visible */}
+          <div className="md:w-[40%] lg:w-[35%] flex flex-col gap-2 min-h-0">
+            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium">TOP CARTONS</p>
+            <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0">
+              {topCards.length === 0 ? (
+                <p className="text-xs text-muted-foreground">En attente des tirages...</p>
+              ) : (
+                topCards.map((card, i) => {
+                  const pct = Math.round((card.foundCount / card.totalCount) * 100)
+                  const isTop = i === 0
+                  const isWinner = winner?.cardId === card.cardId
+                  return (
+                    <Card key={card.cardId} className={`transition-all ${isWinner ? "border-yellow-500 ring-2 ring-yellow-500/30 animate-glow-pulse" : isTop ? "border-primary/40" : "hover:bg-accent/50"}`}>
+                      <CardContent className="flex items-center gap-3 py-2.5 px-3">
+                        <span className={`text-sm font-bold shrink-0 w-5 text-center ${isWinner ? "text-yellow-500" : isTop ? "text-primary" : "text-muted-foreground"}`}>
+                          #{i + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-mono text-sm font-medium truncate">{card.serialNumber}</p>
+                            <p className="text-sm font-bold tabular-nums shrink-0">{pct}%</p>
+                          </div>
+                          <div className="mt-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-300 ${isWinner ? "bg-yellow-500" : "bg-primary"}`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {card.foundCount}/{card.totalCount} numéros
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })
+              )}
+            </div>
           </div>
         </div>
       </main>
