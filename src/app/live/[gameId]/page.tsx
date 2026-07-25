@@ -4,15 +4,49 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
-  Pause, Undo2, Fullscreen, Trophy, Sparkles,
-  Save, Play, HelpCircle, Timer, ArrowRight, Pencil, RotateCcw,
+  Pause, Undo2, Trophy, Sparkles,
+  HelpCircle, Timer, ArrowRight, Pencil, RotateCcw, Plus,
 } from "lucide-react"
 import { toast } from "sonner"
 import type { CardRanking, Game, Card as CardType } from "@/types"
 import { GameEngine } from "@/engine"
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 880
+    osc.type = "sine"
+    gain.gain.setValueAtTime(0.08, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.1)
+  } catch {}
+}
+
+function playWinSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const notes = [523, 659, 784, 1047]
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = freq
+      osc.type = "sine"
+      gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.12)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.15)
+      osc.start(ctx.currentTime + i * 0.12)
+      osc.stop(ctx.currentTime + i * 0.12 + 0.15)
+    })
+  } catch {}
+}
 
 export default function LivePage() {
   const params = useParams()
@@ -38,6 +72,7 @@ export default function LivePage() {
   const [editNumbers, setEditNumbers] = useState<string[]>([])
   const [editSerial, setEditSerial] = useState("")
   const [savingCard, setSavingCard] = useState(false)
+  const [startingNew, setStartingNew] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const cursorTimeout = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -119,10 +154,12 @@ export default function LivePage() {
       eng.drawNumber(num)
       updateUI(eng)
       setLastNumber(num)
+      playBeep()
       inputRef.current?.focus()
 
       const state = eng.getState()
       if (state.winner) {
+        playWinSound()
         toast.success(`🎯 Carton plein ! ${state.winner.serialNumber}`, {
           duration: 8000,
           action: { label: "Arrêter", onClick: () => { setStatus("finished"); setWinner(state.winner) } },
@@ -157,8 +194,6 @@ export default function LivePage() {
     }
   }
 
-  function handleNewGame() { router.push("/dashboard") }
-
   function openEditCard(cardId: number, serial: string, numbers: number[]) {
     setEditCardId(cardId)
     setEditSerial(serial)
@@ -189,6 +224,18 @@ export default function LivePage() {
     setWinner(null)
     updateUI(eng)
     inputRef.current?.focus()
+  }
+
+  async function handleStartNewGame() {
+    setStartingNew(true)
+    try {
+      const { createAndStartGameAction } = await import("@/actions/game.actions")
+      const { game: newGame } = await createAndStartGameAction()
+      router.push(`/live/${newGame.id}`)
+    } catch (e: any) {
+      toast.error(e.message || "Erreur")
+      setStartingNew(false)
+    }
   }
 
   // Init
@@ -239,6 +286,8 @@ export default function LivePage() {
   handleUndoRef.current = handleUndo
   const handleContinueRef = useRef(handleContinueAfterWin)
   handleContinueRef.current = handleContinueAfterWin
+  const handleNewRef = useRef(handleStartNewGame)
+  handleNewRef.current = handleStartNewGame
   const statusRef = useRef(status)
   statusRef.current = status
 
@@ -248,7 +297,7 @@ export default function LivePage() {
       if (e.key === "Escape") { e.preventDefault(); handleUndoRef.current() }
       if (e.key === " ") { e.preventDefault(); togglePause() }
       if (e.key === "f" || e.key === "F") { toggleFullscreen() }
-      if ((e.key === "n" || e.key === "N") && statusRef.current === "finished") { handleNewGame() }
+      if (e.key === "n" || e.key === "N") { handleNewRef.current() }
       if ((e.key === "c" || e.key === "C") && statusRef.current === "finished") { handleContinueRef.current() }
       if (e.key === "?" || e.key === "h" || e.key === "H") { setShowHelp((v) => !v) }
     }
@@ -310,7 +359,10 @@ export default function LivePage() {
         <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
           <Timer className="w-3 h-3" />
           <span className="tabular-nums">{formatTime(elapsed)}</span>
-          <span className="ml-1">{activeCardCount} cartons</span>
+          <span className="ml-1 hidden sm:inline">{activeCardCount} cartons</span>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={handleStartNewGame} disabled={startingNew}>
+            <Plus className="w-3 h-3" /> Nouvelle
+          </Button>
           <button onClick={() => setShowHelp(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Aide (?)" type="button">
             <HelpCircle className="w-3.5 h-3.5" />
           </button>
@@ -365,23 +417,19 @@ export default function LivePage() {
         {status === "finished" && winner && (
           <div className="absolute inset-0 z-20 bg-background/90 flex items-center justify-center rounded-lg">
             <Card className="border-primary animate-glow-pulse max-w-sm mx-auto">
-              <CardContent className="py-8 text-center space-y-3">
-                <Trophy className="w-12 h-12 text-yellow-500 mx-auto animate-bounce" />
+              <CardContent className="py-8 text-center space-y-4">
+                <Trophy className="w-14 h-14 text-yellow-500 mx-auto animate-bounce" />
                 <h2 className="text-3xl font-bold text-primary">GAGNANT</h2>
                 <p className="text-2xl font-mono font-bold">{winner.serialNumber}</p>
                 <p className="text-sm text-muted-foreground">{winner.foundCount}/{winner.totalCount} numéros trouvés</p>
-                <div className="flex justify-center gap-2 pt-2">
-                  <Button size="lg" onClick={handleNewGame}>
-                    <Sparkles className="w-4 h-4 mr-2" /> Nouvelle partie
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button size="lg" className="w-full text-base h-14" onClick={handleStartNewGame} disabled={startingNew}>
+                    <Sparkles className="w-5 h-5 mr-2" /> Nouvelle partie
                   </Button>
-                  <Button variant="outline" size="lg" onClick={() => { setStatus("running"); setWinner(null) }}>
-                    <ArrowRight className="w-4 h-4 mr-2" /> Continuer
+                  <Button variant="outline" size="lg" className="w-full text-base h-12" onClick={() => { setStatus("running"); setWinner(null) }}>
+                    <ArrowRight className="w-5 h-5 mr-2" /> Continuer cette partie
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground">
-                  <kbd className="px-1 bg-muted rounded font-mono">N</kbd> nouvelle ·
-                  <kbd className="px-1 bg-muted rounded font-mono">C</kbd> continuer
-                </p>
               </CardContent>
             </Card>
           </div>

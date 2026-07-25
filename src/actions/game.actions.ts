@@ -89,6 +89,22 @@ export async function getGameAction(id: number): Promise<Game | null> {
   return gameRepo.findById(id)
 }
 
+export async function createAndStartGameAction(): Promise<{ game: Game; cards: { id: number; serialNumber: string; numbers: number[]; active: boolean }[] }> {
+  const container = getContainer()
+  const { gameRepo, gameCardRepo, cardRepo } = container
+  const { createGame } = await import("@/use-cases/game.usecase")
+
+  const activeCards = await cardRepo.findActive()
+  const cardIds = activeCards.map((c) => c.id)
+
+  const name = `Partie ${new Date().toLocaleDateString("fr-FR")} ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
+  const game = await createGame(gameRepo, gameCardRepo, { name, cardIds })
+
+  const started = await startGameAction(game.id)
+  if (!started.game) throw new Error("Erreur au démarrage de la partie")
+  return started as { game: Game; cards: { id: number; serialNumber: string; numbers: number[]; active: boolean }[] }
+}
+
 export async function getCardsAction(): Promise<Card[]> {
   const { cardRepo } = getContainer()
   return cardRepo.findActive()
