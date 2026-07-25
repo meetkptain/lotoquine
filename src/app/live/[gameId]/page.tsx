@@ -61,7 +61,6 @@ export default function LivePage() {
   const [winner, setWinner] = useState<CardRanking | null>(null)
   const [status, setStatus] = useState<"idle" | "running" | "finished" | "paused">("idle")
   const [activeCardCount, setActiveCardCount] = useState(0)
-  const [inputValue, setInputValue] = useState("")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [cursorHidden, setCursorHidden] = useState(false)
   const [preparing, setPreparing] = useState(true)
@@ -74,7 +73,6 @@ export default function LivePage() {
   const [savingCard, setSavingCard] = useState(false)
   const [startingNew, setStartingNew] = useState(false)
 
-  const inputRef = useRef<HTMLInputElement>(null)
   const cursorTimeout = useRef<ReturnType<typeof setTimeout>>(undefined)
   const saveTimerRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
@@ -142,11 +140,7 @@ export default function LivePage() {
     }
   }, [gameId, updateUI])
 
-  const handleDraw = useCallback(async () => {
-    const num = parseInt(inputValue, 10)
-    if (isNaN(num)) return
-    setInputValue("")
-
+  const handleDraw = useCallback(async (num: number) => {
     const eng = engine
     if (!eng) return
 
@@ -155,7 +149,6 @@ export default function LivePage() {
       updateUI(eng)
       setLastNumber(num)
       playBeep()
-      inputRef.current?.focus()
 
       const state = eng.getState()
       if (state.winner) {
@@ -168,7 +161,7 @@ export default function LivePage() {
     } catch (e: any) {
       toast.error(e.message)
     }
-  }, [inputValue, engine, updateUI])
+  }, [engine, updateUI])
 
   const handleUndo = useCallback(() => {
     const eng = engine
@@ -223,7 +216,6 @@ export default function LivePage() {
     setStatus("running")
     setWinner(null)
     updateUI(eng)
-    inputRef.current?.focus()
   }
 
   async function handleStartNewGame() {
@@ -240,9 +232,6 @@ export default function LivePage() {
 
   // Init
   useEffect(() => { if (!isNaN(gameId)) initGame() }, [gameId])
-
-  // Focus input when running
-  useEffect(() => { if (engine && status === "running") inputRef.current?.focus() }, [engine, status])
 
   // Timer
   useEffect(() => {
@@ -528,8 +517,7 @@ export default function LivePage() {
                     `}
                     onClick={() => {
                       if (!drawn) {
-                        setInputValue(String(num))
-                        handleDraw()
+                        handleDraw(num)
                       }
                     }}
                     aria-label={`Numéro ${num}${drawn ? " (déjà tiré)" : ""}`}
