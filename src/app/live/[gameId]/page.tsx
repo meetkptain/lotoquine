@@ -465,12 +465,21 @@ export default function LivePage() {
         <div className="flex flex-col md:flex-row gap-3 md:gap-6 flex-1 min-h-0">
           {/* Left column — grid + controls */}
           <div className="md:w-[58%] flex flex-col gap-3 min-w-0">
-            {/* Last number — big display */}
-            <div className="flex flex-col items-center gap-1">
-              <div className={`text-4xl sm:text-5xl font-bold tabular-nums transition-all duration-150 ${lastNumber ? "text-primary scale-100" : "text-muted-foreground/30 scale-95"}`}>
-                {lastNumber ? String(lastNumber).padStart(2, "0") : "—"}
+            {/* Last number + counts */}
+            <div className="flex items-center justify-between">
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Tirés</p>
+                <p className="text-lg font-bold tabular-nums">{drawnNumbers.length}</p>
               </div>
-              <p className="text-[10px] text-muted-foreground">{drawnNumbers.length}/90 tirés</p>
+              <div className="flex flex-col items-center">
+                <div className={`text-4xl sm:text-5xl font-bold tabular-nums transition-all duration-150 ${lastNumber ? "text-primary scale-100" : "text-muted-foreground/30 scale-95"}`}>
+                  {lastNumber ? String(lastNumber).padStart(2, "0") : "—"}
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Restants</p>
+                <p className="text-lg font-bold tabular-nums text-muted-foreground">{90 - drawnNumbers.length}</p>
+              </div>
             </div>
 
             {/* Mini history — last numbers in order */}
@@ -492,27 +501,29 @@ export default function LivePage() {
             )}
 
             {/* Number grid — 1 to 90, tap to draw */}
-            <div className="grid grid-cols-10 gap-1 md:gap-1">
+            <div className="grid grid-cols-10 gap-1.5">
               {Array.from({ length: 90 }, (_, i) => {
                 const num = i + 1
                 const drawn = drawnNumbers.includes(num)
                 const isLast = num === lastNumber
+                const row = Math.floor((num - 1) / 10)
+                const banded = row % 2 === 1
                 return (
                   <button
                     key={num}
                     type="button"
                     className={`
-                      aspect-square rounded
-                      text-sm md:text-xs lg:text-sm font-mono font-bold
+                      min-h-10 rounded
+                      text-sm font-mono font-bold
                       transition-all duration-100 active:scale-90
                       flex items-center justify-center
-                      touch-manipulation select-none
-                      w-full min-h-10 md:min-h-9
+                      touch-manipulation select-none cursor-pointer
+                      w-full
                       ${drawn
                         ? isLast
                           ? "bg-primary text-primary-foreground ring-2 ring-primary/40 scale-110 z-10"
-                          : "bg-muted text-muted-foreground/70 line-through"
-                        : "bg-card border border-border text-foreground hover:bg-accent active:bg-accent"
+                          : "bg-muted-foreground/15 text-muted-foreground/50"
+                        : `${banded ? "bg-muted/20" : "bg-card"} border border-border text-foreground hover:shadow-sm hover:border-primary active:bg-accent shadow-sm`
                       }
                     `}
                     onClick={() => {
