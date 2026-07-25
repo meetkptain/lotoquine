@@ -298,26 +298,21 @@ export default function LivePage() {
   return (
     <div className={`min-h-screen bg-background flex flex-col ${cursorHidden ? "cursor-none" : ""}`}>
       {/* Header */}
-      <header className={`border-b border-border bg-card/95 backdrop-blur px-4 py-1.5 flex items-center justify-between ${isFullscreen ? "hidden" : ""}`}>
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-primary tracking-tight">LOTOQUINE</span>
+      <header className={`border-b border-border bg-card/95 backdrop-blur px-3 py-2 flex items-center justify-between gap-2 ${isFullscreen ? "hidden" : ""}`}>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-bold text-primary tracking-tight text-sm sm:text-base">LOTOQUINE</span>
           <span className="text-xs text-muted-foreground">|</span>
-          <span className="text-sm font-medium truncate max-w-[200px]">{game.name}</span>
-          <Badge variant={status === "running" ? "default" : status === "finished" ? "outline" : "secondary"} className="text-[10px] px-1.5 py-0">
+          <span className="text-xs sm:text-sm font-medium truncate">{game.name}</span>
+          <Badge variant={status === "running" ? "default" : status === "finished" ? "outline" : "secondary"} className="text-[9px] px-1.5 py-0">
             {status === "running" ? "EN DIRECT" : status === "paused" ? "EN PAUSE" : status === "finished" ? "TERMINÉ" : "PRÊT"}
           </Badge>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
           <Timer className="w-3 h-3" />
           <span className="tabular-nums">{formatTime(elapsed)}</span>
-          <span className="hidden sm:inline">{activeCardCount} cartons</span>
-          <span className="hidden sm:inline">Tirage #{drawnNumbers.length}</span>
-          <Save className={`w-3 h-3 ${saved ? "text-green-500" : "text-yellow-500"}`} />
+          <span className="ml-1">{activeCardCount} cartons</span>
           <button onClick={() => setShowHelp(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Aide (?)" type="button">
-            <HelpCircle className="w-4 h-4" />
-          </button>
-          <button onClick={toggleFullscreen} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Plein écran (F)" type="button">
-            <Fullscreen className="w-4 h-4" />
+            <HelpCircle className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
@@ -392,90 +387,87 @@ export default function LivePage() {
           </div>
         )}
 
-        {/* Game content — always visible, never blocked by winner */}
-        <div className="flex items-stretch gap-3">
-          <div className="flex flex-col items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-card border border-border shrink-0">
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">N°</span>
-            <span key={lastNumber} className="animate-number-reveal text-4xl sm:text-5xl font-bold tabular-nums text-primary leading-none">
-              {lastNumber ?? "—"}
+        {/* Number grid — 1 to 90, tap to draw */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              Tirés : {drawnNumbers.length}/90
+            </p>
+            <span className="text-lg font-bold tabular-nums text-primary">
+              #{lastNumber ?? "—"}
             </span>
           </div>
-
-          <div className="flex-1 flex flex-col justify-center gap-1.5 min-w-0">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Saisir un numéro</p>
-            <div className="flex flex-wrap gap-1.5">
-              <Input
-                ref={inputRef}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                enterKeyHint="done"
-                className="text-xl sm:text-2xl h-12 w-24 sm:w-32 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                placeholder="45"
-                value={inputValue}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/\D/g, "")
-                  if (v === "" || (parseInt(v) >= 1 && parseInt(v) <= 90)) setInputValue(v)
-                }}
-                onKeyDown={(e) => { if (e.key === "Enter") handleDraw() }}
-                autoFocus
-              />
-              <Button className="h-12 px-3 text-sm" onClick={handleDraw} disabled={!inputValue}>
-                OK
-              </Button>
-              <Button variant="outline" size="icon" className="h-12 w-12" onClick={handleUndo} disabled={drawnNumbers.length === 0} title="Annuler (ESC)">
-                <Undo2 className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="h-12 w-12" onClick={togglePause} title="Pause (ESPACE)">
-                <Pause className="w-4 h-4" />
-              </Button>
-            </div>
+          <div className="grid grid-cols-10 gap-1 sm:gap-1.5">
+            {Array.from({ length: 90 }, (_, i) => {
+              const num = i + 1
+              const drawn = drawnNumbers.includes(num)
+              const isLast = num === lastNumber
+              return (
+                <button
+                  key={num}
+                  type="button"
+                  className={`
+                    aspect-square rounded-md text-sm sm:text-base font-mono font-bold
+                    transition-all duration-100 active:scale-90
+                    flex items-center justify-center
+                    touch-manipulation select-none
+                    w-full min-h-[36px] sm:min-h-[44px]
+                    ${drawn
+                      ? isLast
+                        ? "bg-primary text-primary-foreground ring-2 ring-primary/40 scale-110 z-10"
+                        : "bg-muted text-muted-foreground/40 line-through"
+                      : "bg-card border border-border text-foreground hover:bg-accent active:bg-accent"
+                    }
+                  `}
+                  onClick={() => {
+                    if (!drawn) {
+                      setInputValue(String(num))
+                      handleDraw()
+                    }
+                  }}
+                  aria-label={`Numéro ${num}${drawn ? " (déjà tiré)" : ""}`}
+                >
+                  {num}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {/* History */}
-        <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Historique ({drawnNumbers.length})</p>
-          <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
-            {drawnNumbers.length === 0 ? (
-              <span className="text-xs text-muted-foreground">En attente du premier numéro...</span>
-            ) : (
-              drawnNumbers.map((num, i) => (
-                <span key={i} className={`inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-mono font-bold transition-all ${
-                  i === drawnNumbers.length - 1 ? "bg-primary text-primary-foreground scale-110 animate-count-up ring-2 ring-primary/30" :
-                  i >= drawnNumbers.length - 5 ? "bg-muted text-foreground" : "bg-muted/50 text-muted-foreground"
-                }`}>
-                  {num}
-                </span>
-              ))
-            )}
-          </div>
+        {/* Bottom controls */}
+        <div className="flex gap-2 items-center">
+          <Button variant="outline" className="h-12 flex-1 text-sm" onClick={handleUndo} disabled={drawnNumbers.length === 0}>
+            <Undo2 className="w-4 h-4 mr-1.5" /> Annuler
+          </Button>
+          <Button variant="outline" className="h-12 flex-1 text-sm" onClick={togglePause}>
+            <Pause className="w-4 h-4 mr-1.5" /> Pause
+          </Button>
         </div>
 
         {/* Winner banner — non-blocking, game keeps running */}
         {winner && (
-          <div className="rounded-xl border border-yellow-500/50 bg-yellow-500/5 p-3 sm:p-4 flex items-center gap-3 animate-glow-pulse">
-            <Trophy className="w-7 h-7 text-yellow-500 shrink-0" />
+          <div className="rounded-xl border-2 border-yellow-500/50 bg-yellow-500/10 p-3 sm:p-4 flex items-center gap-3 animate-glow-pulse">
+            <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-500 shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-yellow-500 uppercase tracking-wider">Carton plein</p>
-              <p className="font-mono text-base sm:text-lg font-bold">{winner.serialNumber}</p>
-              <p className="text-xs text-muted-foreground">{winner.foundCount}/{winner.totalCount} numéros</p>
+              <p className="text-xs sm:text-sm font-bold text-yellow-500 uppercase tracking-wider">Carton plein</p>
+              <p className="font-mono text-lg sm:text-xl font-bold">{winner.serialNumber}</p>
+              <p className="text-xs text-muted-foreground">{winner.foundCount}/{winner.totalCount} numéros trouvés</p>
             </div>
-            <div className="flex gap-1.5 shrink-0">
-              <Button size="sm" variant="outline" onClick={() => { engine?.continueGame(); setWinner(null) }}>
-                Continuer
+            <div className="flex gap-2 shrink-0">
+              <Button className="h-10 sm:h-12 px-3 sm:px-4 text-xs sm:text-sm" variant="default" onClick={() => { engine?.continueGame(); setWinner(null) }}>
+                <ArrowRight className="w-4 h-4 mr-1" /> Continuer
               </Button>
-              <Button size="sm" variant="default" onClick={() => { engine?.continueGame(); setStatus("finished"); setWinner(winner) }}>
+              <Button className="h-10 sm:h-12 px-3 sm:px-4 text-xs sm:text-sm" variant="destructive" onClick={() => { engine?.continueGame(); setStatus("finished"); setWinner(winner) }}>
                 Arrêter
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={async () => {
+              <Button variant="ghost" size="icon" className="h-10 sm:h-12 w-10 sm:w-12" onClick={async () => {
                 try {
                   const { getCardWithNumbersAction } = await import("@/actions/game.actions")
                   const detail = await getCardWithNumbersAction(winner.cardId)
                   if (detail) openEditCard(detail.id, detail.serialNumber, detail.numbers)
                 } catch {}
               }} title="Corriger le carton">
-                <Pencil className="w-3.5 h-3.5" />
+                <Pencil className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -555,18 +547,6 @@ export default function LivePage() {
         </div>
       )}
 
-      {/* Footer */}
-      <footer className={`border-t border-border bg-card/80 px-4 py-1 ${isFullscreen ? "hidden" : ""}`}>
-        <div className="flex gap-3 text-[10px] text-muted-foreground justify-center sm:justify-start flex-wrap">
-          <span><kbd className="px-1 bg-muted rounded font-mono text-[9px]">Entrée</kbd> Valider</span>
-          <span><kbd className="px-1 bg-muted rounded font-mono text-[9px]">ESC</kbd> Annuler</span>
-          <span><kbd className="px-1 bg-muted rounded font-mono text-[9px]">⎵</kbd> Pause</span>
-          <span><kbd className="px-1 bg-muted rounded font-mono text-[9px]">F</kbd> Plein écran</span>
-          <span><kbd className="px-1 bg-muted rounded font-mono text-[9px]">N</kbd> Nouvelle</span>
-          <span><kbd className="px-1 bg-muted rounded font-mono text-[9px]">C</kbd> Continuer</span>
-          <span><kbd className="px-1 bg-muted rounded font-mono text-[9px]">?</kbd> Aide</span>
-        </div>
-      </footer>
     </div>
   )
 }
