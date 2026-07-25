@@ -1,0 +1,5 @@
+export type { IGameRepository } from "./igame-repository"
+export type { ICardRepository } from "./icard-repository"
+export type { IDrawRepository } from "./idraw-repository"
+export type { IGameCardRepository } from "./igame-card-repository"
+export type { ICardProgressRepository } from "./icard-progress-repository"
