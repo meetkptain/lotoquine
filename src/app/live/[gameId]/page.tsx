@@ -529,9 +529,11 @@ export default function LivePage() {
                     onClick={() => {
                       if (!drawn) {
                         handleDraw(num)
+                      } else if (isLast) {
+                        handleUndo()
                       }
                     }}
-                    aria-label={`Numéro ${num}${drawn ? " (déjà tiré)" : ""}`}
+                    aria-label={isLast ? `Numéro ${num} (taper pour annuler)` : `Numéro ${num}${drawn ? " (déjà tiré)" : ""}`}
                   >
                     {num}
                   </button>
