@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner"
 import type { CardRanking, Game, Card as CardType } from "@/types"
 import { GameEngine } from "@/engine"
+import { MAX_NUMBER } from "@/lib/constants"
 
 function playBeep() {
   try {
@@ -195,7 +196,7 @@ export default function LivePage() {
 
   async function saveCardEdit() {
     if (!editCardId || !engine) return
-    const nums = editNumbers.map(Number).filter((n) => !isNaN(n) && n >= 1 && n <= 90)
+    const nums = editNumbers.map(Number).filter((n) => !isNaN(n) && n >= 1 && n <= MAX_NUMBER)
     if (nums.length === 0) { toast.error("Au moins un numéro valide"); return }
     setSavingCard(true)
     try {
@@ -478,7 +479,7 @@ export default function LivePage() {
               </div>
               <div className="text-center">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Restants</p>
-                <p className="text-lg font-bold tabular-nums text-muted-foreground">{90 - drawnNumbers.length}</p>
+                <p className="text-lg font-bold tabular-nums text-muted-foreground">{MAX_NUMBER - drawnNumbers.length}</p>
               </div>
             </div>
 
@@ -500,9 +501,9 @@ export default function LivePage() {
               </div>
             )}
 
-            {/* Number grid — 1 to 90, tap to draw */}
+            {/* Number grid — 1 to MAX_NUMBER, tap to draw */}
             <div className="grid grid-cols-10 gap-1.5">
-              {Array.from({ length: 90 }, (_, i) => {
+              {Array.from({ length: MAX_NUMBER }, (_, i) => {
                 const num = i + 1
                 const drawn = drawnNumbers.includes(num)
                 const isLast = num === lastNumber
