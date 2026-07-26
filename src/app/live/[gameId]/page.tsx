@@ -152,6 +152,8 @@ export default function LivePage() {
       updateUI(eng)
       setLastNumber(num)
       playBeep()
+      import("@/actions/game.actions").then(({ saveDrawnNumbersAction }) =>
+        saveDrawnNumbersAction(gameId, [...eng.getDrawnNumbers()]))
 
       const state = eng.getState()
       if (state.winners.length > 0) {
@@ -171,7 +173,7 @@ export default function LivePage() {
     } catch (e: any) {
       toast.error(e.message)
     }
-  }, [engine, updateUI])
+  }, [engine, updateUI, gameId])
 
   const handleUndo = useCallback(() => {
     const eng = engine
@@ -179,8 +181,10 @@ export default function LivePage() {
     try {
       const result = eng.undoLastDraw()
       if (result) { setLastNumber(result.number); updateUI(eng) }
+      import("@/actions/game.actions").then(({ saveDrawnNumbersAction }) =>
+        saveDrawnNumbersAction(gameId, eng ? [...eng.getDrawnNumbers()] : []))
     } catch (e: any) { toast.error(e.message) }
-  }, [engine, updateUI])
+  }, [engine, updateUI, gameId])
 
   const handleUnDraw = useCallback((num: number) => {
     const eng = engine
@@ -189,8 +193,10 @@ export default function LivePage() {
       eng.unDrawNumber(num)
       setLastNumber(eng.getDrawnNumbers().at(-1) ?? null)
       updateUI(eng)
+      import("@/actions/game.actions").then(({ saveDrawnNumbersAction }) =>
+        saveDrawnNumbersAction(gameId, [...eng.getDrawnNumbers()]))
     } catch (e: any) { toast.error(e.message) }
-  }, [engine, updateUI])
+  }, [engine, updateUI, gameId])
 
   function togglePause() {
     const eng = engine
