@@ -553,28 +553,54 @@ export default function LivePage() {
             </div>
           </div>
 
-          {/* Right column — top cards full height */}
+          {/* Right column — per-card number grids */}
           <div className="md:w-[40%] flex flex-col min-h-0 overflow-hidden">
-            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium shrink-0">TOP CARTONS</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium shrink-0">CARTONS</p>
             <div className="flex-1 overflow-y-auto min-h-0">
               {topCards.length === 0 ? (
                 <p className="text-xs text-muted-foreground p-2">En attente des tirages...</p>
               ) : (
-                <div className="grid grid-cols-2 gap-1 p-0.5">
+                <div className="grid grid-cols-2 gap-1.5 p-0.5">
                   {topCards.map((card, i) => {
+                    const cardNumbers = engine?.getCardNumbers(card.cardId) ?? []
                     const isWinner = winner?.cardId === card.cardId
-                    const isTop = i === 0
                     return (
-                      <div key={card.cardId} className={`flex items-center gap-1 rounded px-1 py-1 min-w-0 ${isWinner ? "bg-yellow-500/15 ring-1 ring-yellow-500/40 animate-glow-pulse" : isTop ? "bg-primary/5" : ""}`}>
-                        <span className={`text-xs font-bold w-4 text-center shrink-0 ${isWinner ? "text-yellow-500" : isTop ? "text-primary" : "text-muted-foreground"}`}>
-                          {i + 1}
-                        </span>
-                        <span className={`font-mono text-xs font-medium truncate ${isWinner ? "font-bold" : ""}`}>
-                          {card.serialNumber}
-                        </span>
-                        <span className={`text-xs font-bold tabular-nums shrink-0 ml-auto ${isWinner ? "text-yellow-500" : ""}`}>
-                          {card.foundCount}/{card.totalCount}
-                        </span>
+                      <div
+                        key={card.cardId}
+                        className={`rounded border px-1.5 py-1 ${
+                          isWinner ? "border-yellow-500/60 bg-yellow-500/10" : "border-border"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-0.5">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className={`text-[10px] font-bold w-3 text-center shrink-0 ${isWinner ? "text-yellow-500" : "text-muted-foreground"}`}>
+                              {i + 1}
+                            </span>
+                            <span className={`font-mono text-[10px] truncate ${isWinner ? "font-bold text-yellow-500" : ""}`}>
+                              {card.serialNumber}
+                            </span>
+                          </div>
+                          <span className={`text-[10px] tabular-nums font-bold shrink-0 ml-1 ${isWinner ? "text-yellow-500" : "text-muted-foreground"}`}>
+                            {card.foundCount}/{card.totalCount}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-5 gap-px">
+                          {cardNumbers.map((num) => {
+                            const drawn = drawnNumbers.includes(num)
+                            return (
+                              <div
+                                key={num}
+                                className={`flex items-center justify-center w-6 h-6 rounded-sm text-[9px] font-mono font-bold ${
+                                  drawn
+                                    ? "bg-muted-foreground/15 text-muted-foreground/50 line-through"
+                                    : "bg-primary/10 text-primary"
+                                }`}
+                              >
+                                {num}
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
                     )
                   })}

@@ -152,6 +152,10 @@ export class GameEngine {
     return this.calculator.getTopCards()
   }
 
+  getCardNumbers(cardId: number): number[] {
+    return this.index.getNumbersForCard(cardId)
+  }
+
   continueGame(): void {
     // Dismiss the current winner — the card stays in the game but won't be
     // highlighted as winner anymore. The engine keeps running.
