@@ -249,6 +249,16 @@ export default function LivePage() {
 
   async function handleStartNewGame() {
     setStartingNew(true)
+    setPreparing(true)
+    // Reset all game state immediately — no flash of old data
+    setGame(null)
+    setEngine(null)
+    setDrawnNumbers([])
+    setLastNumber(null)
+    setTopCards([])
+    setWinner([])
+    setStatus("idle")
+    setElapsed(0)
     try {
       const { createAndStartGameAction } = await import("@/actions/game.actions")
       const { game: newGame } = await createAndStartGameAction()
@@ -256,6 +266,7 @@ export default function LivePage() {
     } catch (e: any) {
       toast.error(e.message || "Erreur")
       setStartingNew(false)
+      setPreparing(false)
     }
   }
 
