@@ -588,16 +588,21 @@ export default function LivePage() {
                           {cardNumbers.map((num) => {
                             const drawn = drawnNumbers.includes(num)
                             return (
-                              <div
+                              <button
                                 key={num}
-                                className={`flex items-center justify-center aspect-square rounded-sm text-[10px] font-mono font-bold ${
+                                type="button"
+                                onClick={() => {
+                                  if (!drawn) handleDraw(num)
+                                }}
+                                className={`flex items-center justify-center aspect-square rounded-sm text-[10px] font-mono font-bold transition-all duration-100 active:scale-90 touch-manipulation select-none cursor-pointer ${
                                   drawn
                                     ? "bg-muted-foreground/15 text-muted-foreground/50 line-through"
-                                    : "bg-primary/10 text-primary"
+                                    : "bg-primary/10 text-primary hover:bg-primary/20 hover:shadow-sm"
                                 }`}
+                                aria-label={drawn ? `Numéro ${num} (déjà tiré)` : `Numéro ${num}`}
                               >
                                 {String(num).padStart(2, "0")}
-                              </div>
+                              </button>
                             )
                           })}
                         </div>
