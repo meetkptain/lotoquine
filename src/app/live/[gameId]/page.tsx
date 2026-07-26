@@ -248,6 +248,7 @@ export default function LivePage() {
   }
 
   async function handleStartNewGame() {
+    if (startingNew) return
     setStartingNew(true)
     setPreparing(true)
     // Reset all game state immediately — no flash of old data
@@ -265,8 +266,7 @@ export default function LivePage() {
       router.push(`/live/${newGame.id}`)
     } catch (e: any) {
       toast.error(e.message || "Erreur")
-      setStartingNew(false)
-      setPreparing(false)
+      router.push("/live")
     }
   }
 
