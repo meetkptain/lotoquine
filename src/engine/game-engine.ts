@@ -92,6 +92,7 @@ export class GameEngine {
 
     const affectedCardIds = this.index.getCardIdsByNumber(lastNumber)
     this.calculator.unmarkNumber(affectedCardIds)
+    this.cleanDismissedWinners(affectedCardIds)
 
     this._lastWinners = []
 
@@ -114,6 +115,7 @@ export class GameEngine {
 
     const affectedCardIds = this.index.getCardIdsByNumber(number)
     this.calculator.unmarkNumber(affectedCardIds)
+    this.cleanDismissedWinners(affectedCardIds)
 
     this._lastWinners = []
 
@@ -177,6 +179,22 @@ export class GameEngine {
     }
     this._lastWinners = []
     this.status = "running"
+  }
+
+  /**
+   * If a dismissed winner drops below totalCount (undo/unDraw),
+   * remove it from dismissedWinners so it can be re-detected if re-completed.
+   */
+  private cleanDismissedWinners(affectedCardIds: Set<number>): void {
+    for (const cardId of affectedCardIds) {
+      if (this.dismissedWinners.has(cardId)) {
+        const found = this.calculator.getFoundCount(cardId)
+        const total = this.calculator.getTotalCount(cardId)
+        if (found < total) {
+          this.dismissedWinners.delete(cardId)
+        }
+      }
+    }
   }
 
   isWinnerDismissed(cardId: number): boolean {
