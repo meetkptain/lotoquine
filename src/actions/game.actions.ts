@@ -2,7 +2,7 @@
 
 import { getContainer } from "@/di/container"
 import type { CreateCardDTO, CsvCardRow, Game, Card } from "@/types"
-import { cards as cardsTable, cardNumbers } from "@/db/schema"
+import { cards as cardsTable, cardNumbers, winners } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
 export async function createGameAction(name: string, cardIds: number[]): Promise<Game> {
@@ -194,9 +194,8 @@ export async function getDrawnNumbersAction(gameId: number): Promise<number[]> {
 export async function saveDrawnNumbersAction(
   gameId: number,
   drawnNumbers: number[],
-  winnerCardId: number | null
 ): Promise<void> {
-  const { drawRepo, progressRepo, gameRepo } = getContainer()
+  const { drawRepo, progressRepo } = getContainer()
 
   const existing = await drawRepo.findByGame(gameId)
   const existingSet = new Set(existing.map((d) => d.number))
@@ -207,10 +206,29 @@ export async function saveDrawnNumbersAction(
       await drawRepo.add(gameId, num, i + 1)
     }
   }
+}
 
-  if (winnerCardId) {
-    await gameRepo.finishGame(gameId, winnerCardId)
-  }
+export async function acknowledgeWinnersAction(gameId: number, cardIds: number[]) {
+  const { getDb } = await import("@/db/client")
+  const db = getDb()
+  const values = cardIds.map((cardId) => ({
+    gameId,
+    cardId,
+    createdAt: new Date().toISOString(),
+  }))
+  await db.insert(winners).values(values)
+}
+
+export async function getAcknowledgedWinnersAction(gameId: number): Promise<number[]> {
+  const { getDb } = await import("@/db/client")
+  const db = getDb()
+  const rows = await db.select().from(winners).where(eq(winners.gameId, gameId))
+  return rows.map((r) => r.cardId)
+}
+
+export async function finishGameAction(gameId: number): Promise<void> {
+  const { gameRepo } = getContainer()
+  await gameRepo.updateStatus(gameId, "FINISHED")
 }
 
 function parseTursoUrl(url: string): { dbName: string; branch: string; org: string } {

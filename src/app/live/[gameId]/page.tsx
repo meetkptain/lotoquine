@@ -115,9 +115,10 @@ export default function LivePage() {
         startTimeRef.current = Date.now()
       } else {
         // RUNNING or FINISHED — load state and replay draws
-        const [cards, drawnNums] = await Promise.all([
+        const [cards, drawnNums, ackCardIds] = await Promise.all([
           getCardsForGameAction(gameId),
           import("@/actions/game.actions").then((m) => m.getDrawnNumbersAction(gameId)),
+          import("@/actions/game.actions").then((m) => m.getAcknowledgedWinnersAction(gameId)),
         ])
         const typedCards: CardType[] = cards.map((c: any) => ({
           id: c.id, serialNumber: c.serialNumber,
@@ -125,6 +126,7 @@ export default function LivePage() {
         }))
         const eng = new GameEngine(typedCards, gameId, g.name)
         eng.startGame()
+        eng.preloadDismissedWinners(ackCardIds)
         for (const n of drawnNums) {
           try { eng.drawNumber(n) } catch { /* skip dupes */ }
         }
@@ -159,7 +161,10 @@ export default function LivePage() {
           duration: 8000,
           action: {
             label: "Arrêter",
-            onClick: () => { setStatus("finished"); setWinner([...state.winners]) },
+            onClick: () => {
+              setStatus("finished"); setWinner([...state.winners])
+              import("@/actions/game.actions").then(({ finishGameAction }) => finishGameAction(gameId))
+            },
           },
         })
       }
@@ -227,6 +232,9 @@ export default function LivePage() {
   function handleContinueAfterWin() {
     const eng = engine
     if (!eng) return
+    const currentWinners = winner.map(w => w.cardId)
+    import("@/actions/game.actions").then(({ acknowledgeWinnersAction }) =>
+      acknowledgeWinnersAction(gameId, currentWinners))
     eng.continueGame()
     setStatus("running")
     setWinner([])
@@ -258,16 +266,19 @@ export default function LivePage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [status])
 
-  // Auto-save
+  // Auto-save draws to localStorage + server
   useEffect(() => {
     if (status === "running" || status === "paused") {
       saveTimerRef.current = setInterval(() => {
         const eng = engineRef.current
         if (eng && game) {
+          const nums = eng.getDrawnNumbers()
           import("@/lib/persistence").then(({ saveGameState }) => {
-            saveGameState(game.id, game.name, eng.getDrawnNumbers())
+            saveGameState(game.id, game.name, nums)
             setSaved(true)
           })
+          import("@/actions/game.actions").then(({ saveDrawnNumbersAction }) =>
+            saveDrawnNumbersAction(game.id, nums))
         }
       }, 5000)
     }
@@ -276,12 +287,11 @@ export default function LivePage() {
 
   useEffect(() => { engineRef.current = engine }, [engine])
 
-  // Save winner
+  // Save draws to server on winner (ensure it's persisted immediately)
   useEffect(() => {
     if (winner.length > 0 && game) {
-      import("@/lib/persistence").then(({ saveGameState }) => saveGameState(game.id, game.name, drawnNumbers))
       import("@/actions/game.actions").then(({ saveDrawnNumbersAction }) =>
-        saveDrawnNumbersAction(game.id, drawnNumbers, winner[0]?.cardId ?? null))
+        saveDrawnNumbersAction(game.id, drawnNumbers))
     }
   }, [winner, game, drawnNumbers])
 
@@ -470,9 +480,13 @@ export default function LivePage() {
               <Button className="h-12 px-4 text-sm font-bold" variant="default" onClick={() => { engine?.continueGame(); setWinner([]) }}>
                 Continuer
               </Button>
-              <Button className="h-12 px-4 text-sm font-bold" variant="destructive" onClick={() => { engine?.continueGame(); setStatus("finished") }}>
-                Arrêter
-              </Button>
+                <Button className="h-12 px-4 text-sm font-bold" variant="destructive" onClick={() => {
+                  engine?.continueGame()
+                  import("@/actions/game.actions").then(({ finishGameAction }) => finishGameAction(gameId))
+                  setStatus("finished")
+                }}>
+                  Arrêter
+                </Button>
             </div>
           </div>
         )}

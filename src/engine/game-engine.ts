@@ -45,6 +45,17 @@ export class GameEngine {
     this.status = "running"
   }
 
+  /**
+   * Pre-populate dismissed winners from a previous session.
+   * Called when reloading a game — card IDs that were already "continued" past
+   * are added to the dismissed set so they aren't re-detected as new winners.
+   */
+  preloadDismissedWinners(cardIds: number[]): void {
+    for (const id of cardIds) {
+      this.dismissedWinners.add(id)
+    }
+  }
+
   drawNumber(number: number): DrawResult {
     if (this.status !== "running") {
       throw new Error("La partie n'est pas en cours")
