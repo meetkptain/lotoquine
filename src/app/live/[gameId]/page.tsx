@@ -581,19 +581,21 @@ export default function LivePage() {
                   {topCards.map((card, i) => {
                     const cardNumbers = engine?.getCardNumbers(card.cardId) ?? []
                     const isWinner = winner.some(w => w.cardId === card.cardId)
+                    const wasWinner = engine?.isWinnerDismissed(card.cardId)
                     return (
                       <div
                         key={card.cardId}
                         className={`rounded border px-1.5 py-1 ${
-                          isWinner ? "border-yellow-500/60 bg-yellow-500/10" : "border-border"
+                          isWinner ? "border-yellow-500/60 bg-yellow-500/10 ring-1 ring-yellow-500/40 animate-glow-pulse" : wasWinner ? "border-amber-400/40 bg-amber-400/5" : "border-border"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-0.5">
                           <div className="flex items-center gap-1 min-w-0">
+                            {wasWinner && !isWinner && <Trophy className="w-2.5 h-2.5 text-amber-400 shrink-0" />}
                             <span className={`text-[10px] font-bold w-3 text-center shrink-0 ${isWinner ? "text-yellow-500" : "text-muted-foreground"}`}>
                               {i + 1}
                             </span>
-                            <span className={`font-mono text-[10px] truncate ${isWinner ? "font-bold text-yellow-500" : ""}`}>
+                            <span className={`font-mono text-[10px] truncate ${isWinner ? "font-bold text-yellow-500" : wasWinner ? "text-amber-400" : ""}`}>
                               {card.serialNumber}
                             </span>
                           </div>
