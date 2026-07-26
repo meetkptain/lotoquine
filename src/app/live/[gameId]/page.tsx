@@ -502,7 +502,7 @@ export default function LivePage() {
             )}
 
             {/* Number grid — 1 to MAX_NUMBER, tap to draw */}
-            <div className="grid grid-cols-10 gap-1.5">
+            <div className="grid grid-cols-10 gap-2">
               {Array.from({ length: MAX_NUMBER }, (_, i) => {
                 const num = i + 1
                 const drawn = drawnNumbers.includes(num)
@@ -514,7 +514,7 @@ export default function LivePage() {
                     key={num}
                     type="button"
                     className={`
-                      min-h-10 rounded
+                      min-h-11 rounded
                       text-sm font-mono font-bold
                       transition-all duration-100 active:scale-90
                       flex items-center justify-center
@@ -590,13 +590,13 @@ export default function LivePage() {
                             return (
                               <div
                                 key={num}
-                                className={`flex items-center justify-center w-6 h-6 rounded-sm text-[9px] font-mono font-bold ${
+                                className={`flex items-center justify-center aspect-square rounded-sm text-[10px] font-mono font-bold ${
                                   drawn
                                     ? "bg-muted-foreground/15 text-muted-foreground/50 line-through"
                                     : "bg-primary/10 text-primary"
                                 }`}
                               >
-                                {num}
+                                {String(num).padStart(2, "0")}
                               </div>
                             )
                           })}
