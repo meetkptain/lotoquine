@@ -111,6 +111,32 @@ export class GameEngine {
     }
   }
 
+  /**
+   * Remove any drawn number (not just the last one).
+   * Handles tapping a drawn number on the grid or card to un-draw it.
+   */
+  unDrawNumber(number: number): DrawResult {
+    const idx = this.drawnNumbers.indexOf(number)
+    if (idx === -1) throw new Error(`Numéro ${number} pas encore tiré`)
+
+    this.drawnNumbers.splice(idx, 1)
+    this.drawHistory.push(-number)
+
+    const affectedCardIds = this.index.getCardIdsByNumber(number)
+    this.calculator.unmarkNumber(affectedCardIds)
+
+    this._lastWinner = null
+
+    const topCards = this.calculator.getTopCards()
+    const winner = this.detector.findWinner(topCards)
+
+    if (winner && !this.dismissedWinners.has(winner.cardId)) {
+      this._lastWinner = winner
+    }
+
+    return { number, position: idx + 1, topCards, winner }
+  }
+
   pause(): void {
     if (this.status === "running") {
       this.status = "paused"

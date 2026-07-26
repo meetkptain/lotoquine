@@ -173,6 +173,16 @@ export default function LivePage() {
     } catch (e: any) { toast.error(e.message) }
   }, [engine, updateUI])
 
+  const handleUnDraw = useCallback((num: number) => {
+    const eng = engine
+    if (!eng) return
+    try {
+      eng.unDrawNumber(num)
+      setLastNumber(eng.getDrawnNumbers().at(-1) ?? null)
+      updateUI(eng)
+    } catch (e: any) { toast.error(e.message) }
+  }, [engine, updateUI])
+
   function togglePause() {
     const eng = engine
     if (!eng) return
@@ -532,9 +542,11 @@ export default function LivePage() {
                         handleDraw(num)
                       } else if (isLast) {
                         handleUndo()
+                      } else {
+                        handleUnDraw(num)
                       }
                     }}
-                    aria-label={isLast ? `Numéro ${num} (taper pour annuler)` : `Numéro ${num}${drawn ? " (déjà tiré)" : ""}`}
+                    aria-label={drawn ? `Numéro ${num} (taper pour retirer)` : `Numéro ${num}`}
                   >
                     {num}
                   </button>
@@ -591,15 +603,16 @@ export default function LivePage() {
                               <button
                                 key={num}
                                 type="button"
-                                onClick={() => {
-                                  if (!drawn) handleDraw(num)
-                                }}
-                                className={`flex items-center justify-center aspect-square rounded-sm text-[10px] font-mono font-bold transition-all duration-100 active:scale-90 touch-manipulation select-none cursor-pointer ${
-                                  drawn
-                                    ? "bg-muted-foreground/15 text-muted-foreground/50 line-through"
-                                    : "bg-primary/10 text-primary hover:bg-primary/20 hover:shadow-sm"
-                                }`}
-                                aria-label={drawn ? `Numéro ${num} (déjà tiré)` : `Numéro ${num}`}
+                              onClick={() => {
+                                if (!drawn) handleDraw(num)
+                                else handleUnDraw(num)
+                              }}
+                              className={`flex items-center justify-center aspect-square rounded-sm text-[10px] font-mono font-bold transition-all duration-100 active:scale-90 touch-manipulation select-none cursor-pointer ${
+                                drawn
+                                  ? "bg-muted-foreground/15 text-muted-foreground/50 line-through hover:bg-destructive/20 hover:text-destructive"
+                                  : "bg-primary/10 text-primary hover:bg-primary/20 hover:shadow-sm"
+                              }`}
+                              aria-label={drawn ? `Numéro ${num} (taper pour retirer)` : `Numéro ${num}`}
                               >
                                 {String(num).padStart(2, "0")}
                               </button>
