@@ -17,7 +17,7 @@ export class GameEngine {
   private gameName: string
   private drawHistory: number[]
   private dismissedWinners: Set<number>
-  private _lastWinner: CardRanking | null = null
+  private _lastWinners: CardRanking[] = []
 
   constructor(cards: Card[], gameId: number, gameName: string) {
     this.gameId = gameId
@@ -66,21 +66,17 @@ export class GameEngine {
 
     const position = this.drawnNumbers.length
     const topCards = this.calculator.getTopCards()
-    const winner = this.detector.findWinner(topCards)
+    const winners = this.detector.findAllWinners(topCards, this.dismissedWinners)
 
-    // Record winner but NEVER stop the game automatically.
-    // The operator decides when to stop (via "Arrêter" button).
-    // Dismissed winners (from continueGame) are still returned so the UI can show them,
-    // but the engine keeps running.
-    if (winner && !this.dismissedWinners.has(winner.cardId)) {
-      this._lastWinner = winner
+    if (winners.length > 0) {
+      this._lastWinners = winners
     }
 
     return {
       number,
       position,
       topCards,
-      winner,
+      winners,
     }
   }
 
@@ -97,24 +93,18 @@ export class GameEngine {
     const affectedCardIds = this.index.getCardIdsByNumber(lastNumber)
     this.calculator.unmarkNumber(affectedCardIds)
 
-    // Clear last winner — undo might have fixed it
-    this._lastWinner = null
+    this._lastWinners = []
 
     const topCards = this.calculator.getTopCards()
-    const winner = null
 
     return {
       number: lastNumber,
       position: this.drawnNumbers.length + 1,
       topCards,
-      winner,
+      winners: [],
     }
   }
 
-  /**
-   * Remove any drawn number (not just the last one).
-   * Handles tapping a drawn number on the grid or card to un-draw it.
-   */
   unDrawNumber(number: number): DrawResult {
     const idx = this.drawnNumbers.indexOf(number)
     if (idx === -1) throw new Error(`Numéro ${number} pas encore tiré`)
@@ -125,16 +115,16 @@ export class GameEngine {
     const affectedCardIds = this.index.getCardIdsByNumber(number)
     this.calculator.unmarkNumber(affectedCardIds)
 
-    this._lastWinner = null
+    this._lastWinners = []
 
     const topCards = this.calculator.getTopCards()
-    const winner = this.detector.findWinner(topCards)
+    const winners = this.detector.findAllWinners(topCards, this.dismissedWinners)
 
-    if (winner && !this.dismissedWinners.has(winner.cardId)) {
-      this._lastWinner = winner
+    if (winners.length > 0) {
+      this._lastWinners = winners
     }
 
-    return { number, position: idx + 1, topCards, winner }
+    return { number, position: idx + 1, topCards, winners }
   }
 
   pause(): void {
@@ -150,24 +140,23 @@ export class GameEngine {
   }
 
   getState(): GameState {
-    const winner = this._lastWinner
     return {
       gameId: this.gameId,
       gameName: this.gameName,
       status: this.status,
       drawnNumbers: [...this.drawnNumbers],
       topCards: this.calculator.getTopCards(),
-      winner,
+      winners: [...this._lastWinners],
       activeCardCount: this.index.getTotalCards(),
     }
   }
 
-  getLastWinner(): CardRanking | null {
-    return this._lastWinner
+  getLastWinners(): CardRanking[] {
+    return [...this._lastWinners]
   }
 
-  clearLastWinner(): void {
-    this._lastWinner = null
+  clearLastWinners(): void {
+    this._lastWinners = []
   }
 
   getDrawnNumbers(): number[] {
@@ -183,12 +172,10 @@ export class GameEngine {
   }
 
   continueGame(): void {
-    // Dismiss the current winner — the card stays in the game but won't be
-    // highlighted as winner anymore. The engine keeps running.
-    if (this._lastWinner) {
-      this.dismissedWinners.add(this._lastWinner.cardId)
-      this._lastWinner = null
+    for (const w of this._lastWinners) {
+      this.dismissedWinners.add(w.cardId)
     }
+    this._lastWinners = []
     this.status = "running"
   }
 
@@ -196,10 +183,6 @@ export class GameEngine {
     return this.dismissedWinners.has(cardId)
   }
 
-  /**
-   * Replace a card's numbers mid-game (after correcting a data entry error).
-   * Updates the inverted index, recalculates found count from current draws.
-   */
   reloadCard(cardId: number, newNumbers: number[]): void {
     const oldTotal = this.calculator.getTotalCount(cardId)
     if (oldTotal === 0) return

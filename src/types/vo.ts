@@ -68,7 +68,7 @@ export interface GameState {
   status: "idle" | "running" | "finished" | "paused"
   drawnNumbers: number[]
   topCards: CardRanking[]
-  winner: CardRanking | null
+  winners: CardRanking[]
   activeCardCount: number
 }
 
@@ -76,7 +76,7 @@ export interface DrawResult {
   number: number
   position: number
   topCards: CardRanking[]
-  winner: CardRanking | null
+  winners: CardRanking[]
 }
 
 export interface CreateCardDTO {

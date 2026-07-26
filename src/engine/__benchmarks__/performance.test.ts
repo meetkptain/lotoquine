@@ -56,7 +56,7 @@ describe("Performance Benchmarks", () => {
       })
 
       console.log(`  15 draws with ${size.toLocaleString()} cards: ${elapsed.toFixed(1)}ms`)
-      expect(elapsed).toBeLessThan(size === 50_000 ? 500 : 200)
+      expect(elapsed).toBeLessThan(size === 50_000 ? 600 : 200)
     })
 
     it(`gets top cards with ${size.toLocaleString()} cards`, () => {

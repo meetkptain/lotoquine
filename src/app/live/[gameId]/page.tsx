@@ -59,7 +59,7 @@ export default function LivePage() {
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([])
   const [lastNumber, setLastNumber] = useState<number | null>(null)
   const [topCards, setTopCards] = useState<CardRanking[]>([])
-  const [winner, setWinner] = useState<CardRanking | null>(null)
+  const [winner, setWinner] = useState<CardRanking[]>([])
   const [status, setStatus] = useState<"idle" | "running" | "finished" | "paused">("idle")
   const [activeCardCount, setActiveCardCount] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -84,7 +84,7 @@ export default function LivePage() {
     const state = eng.getState()
     setDrawnNumbers([...state.drawnNumbers])
     setTopCards([...state.topCards])
-    setWinner(state.winner ? { ...state.winner } : null)
+    setWinner([...state.winners])
     setStatus(state.status)
     setActiveCardCount(state.activeCardCount)
   }, [])
@@ -152,11 +152,15 @@ export default function LivePage() {
       playBeep()
 
       const state = eng.getState()
-      if (state.winner) {
+      if (state.winners.length > 0) {
         playWinSound()
-        toast.success(`🎯 Carton plein ! ${state.winner.serialNumber}`, {
+        const serials = state.winners.map(w => w.serialNumber).join(", ")
+        toast.success(`🎯 Carton plein ! ${serials}`, {
           duration: 8000,
-          action: { label: "Arrêter", onClick: () => { setStatus("finished"); setWinner(state.winner) } },
+          action: {
+            label: "Arrêter",
+            onClick: () => { setStatus("finished"); setWinner([...state.winners]) },
+          },
         })
       }
     } catch (e: any) {
@@ -225,7 +229,7 @@ export default function LivePage() {
     if (!eng) return
     eng.continueGame()
     setStatus("running")
-    setWinner(null)
+    setWinner([])
     updateUI(eng)
   }
 
@@ -274,10 +278,10 @@ export default function LivePage() {
 
   // Save winner
   useEffect(() => {
-    if (winner && game) {
+    if (winner.length > 0 && game) {
       import("@/lib/persistence").then(({ saveGameState }) => saveGameState(game.id, game.name, drawnNumbers))
       import("@/actions/game.actions").then(({ saveDrawnNumbersAction }) =>
-        saveDrawnNumbersAction(game.id, drawnNumbers, winner.cardId))
+        saveDrawnNumbersAction(game.id, drawnNumbers, winner[0]?.cardId ?? null))
     }
   }, [winner, game, drawnNumbers])
 
@@ -417,26 +421,32 @@ export default function LivePage() {
         )}
 
         {/* Full winner screen when operator clicked "Arrêter" */}
-        {status === "finished" && winner && (
+        {status === "finished" && winner.length > 0 && (
           <div className="absolute inset-0 z-20 bg-yellow-500/10 flex items-center justify-center rounded-lg">
             <div className="text-center space-y-6 px-6">
               <div className="animate-bounce">
                 <Trophy className="w-20 h-20 sm:w-28 sm:h-28 text-yellow-500 mx-auto drop-shadow-lg" />
               </div>
               <h2 className="text-5xl sm:text-7xl font-extrabold text-yellow-500 tracking-tight drop-shadow-md animate-pulse">
-                GAGNANT
+                {winner.length > 1 ? "GAGNANTS" : "GAGNANT"}
               </h2>
-              <p className="text-3xl sm:text-5xl font-mono font-bold text-foreground">
-                {winner.serialNumber}
-              </p>
-              <p className="text-base sm:text-lg text-muted-foreground">
-                {winner.foundCount}/{winner.totalCount} numéros
-              </p>
+              <div className="space-y-2">
+                {winner.map((w) => (
+                  <div key={w.cardId}>
+                    <p className="text-3xl sm:text-5xl font-mono font-bold text-foreground">
+                      {w.serialNumber}
+                    </p>
+                    <p className="text-base sm:text-lg text-muted-foreground">
+                      {w.foundCount}/{w.totalCount} numéros
+                    </p>
+                  </div>
+                ))}
+              </div>
               <div className="flex flex-col gap-3 pt-4 max-w-xs mx-auto">
                 <Button size="lg" className="w-full text-lg h-16 font-bold" onClick={handleStartNewGame} disabled={startingNew}>
                   <Sparkles className="w-6 h-6 mr-2" /> Nouvelle partie
                 </Button>
-                <Button variant="outline" size="lg" className="w-full text-base h-14" onClick={() => { setStatus("running"); setWinner(null) }}>
+                <Button variant="outline" size="lg" className="w-full text-base h-14" onClick={() => { setStatus("running"); setWinner([]) }}>
                   <ArrowRight className="w-5 h-5 mr-2" /> Continuer
                 </Button>
               </div>
@@ -445,28 +455,23 @@ export default function LivePage() {
         )}
 
         {/* Winner banner — non-blocking, full width */}
-        {winner && status !== "finished" && (
+        {winner.length > 0 && status !== "finished" && (
           <div className="rounded-xl border-2 border-yellow-500 bg-yellow-500/20 p-4 sm:p-5 flex items-center gap-4 animate-glow-pulse shadow-lg shadow-yellow-500/20">
             <Trophy className="w-10 h-10 sm:w-14 sm:h-14 text-yellow-500 shrink-0 drop-shadow" />
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-yellow-500 uppercase tracking-wider text-sm sm:text-base">Carton plein</p>
-              <p className="font-mono text-xl sm:text-2xl font-bold">{winner.serialNumber}</p>
+              <p className="font-bold text-yellow-500 uppercase tracking-wider text-sm sm:text-base">
+                {winner.length > 1 ? `Cartons pleins (×${winner.length})` : "Carton plein"}
+              </p>
+              <p className="font-mono text-lg sm:text-xl font-bold">
+                {winner.map(w => w.serialNumber).join(", ")}
+              </p>
             </div>
             <div className="flex gap-2 shrink-0">
-              <Button className="h-12 px-4 text-sm font-bold" variant="default" onClick={() => { engine?.continueGame(); setWinner(null) }}>
+              <Button className="h-12 px-4 text-sm font-bold" variant="default" onClick={() => { engine?.continueGame(); setWinner([]) }}>
                 Continuer
               </Button>
-              <Button className="h-12 px-4 text-sm font-bold" variant="destructive" onClick={() => { engine?.continueGame(); setStatus("finished"); setWinner(winner) }}>
+              <Button className="h-12 px-4 text-sm font-bold" variant="destructive" onClick={() => { engine?.continueGame(); setStatus("finished") }}>
                 Arrêter
-              </Button>
-              <Button variant="ghost" size="icon" className="h-12 w-12" onClick={async () => {
-                try {
-                  const { getCardWithNumbersAction } = await import("@/actions/game.actions")
-                  const detail = await getCardWithNumbersAction(winner.cardId)
-                  if (detail) openEditCard(detail.id, detail.serialNumber, detail.numbers)
-                } catch {}
-              }} title="Corriger le carton">
-                <Pencil className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -575,7 +580,7 @@ export default function LivePage() {
                 <div className="grid grid-cols-2 gap-1.5 p-0.5">
                   {topCards.map((card, i) => {
                     const cardNumbers = engine?.getCardNumbers(card.cardId) ?? []
-                    const isWinner = winner?.cardId === card.cardId
+                    const isWinner = winner.some(w => w.cardId === card.cardId)
                     return (
                       <div
                         key={card.cardId}

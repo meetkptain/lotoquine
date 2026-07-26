@@ -77,17 +77,17 @@ describe("WinnerDetector", () => {
       { cardId: 1, serialNumber: "FD000001", foundCount: 2, totalCount: 3 },
       { cardId: 2, serialNumber: "FD000002", foundCount: 3, totalCount: 3 },
     ]
-    const winner = detector.findWinner(candidates)
-    expect(winner).not.toBeNull()
-    expect(winner!.cardId).toBe(2)
+    const winners = detector.findAllWinners(candidates)
+    expect(winners.length).toBe(1)
+    expect(winners[0].cardId).toBe(2)
   })
 
-  it("returns null when no winner", () => {
+  it("returns empty when no winner", () => {
     const detector = new WinnerDetector()
     const candidates = [
       { cardId: 1, serialNumber: "FD000001", foundCount: 2, totalCount: 3 },
     ]
-    expect(detector.findWinner(candidates)).toBeNull()
+    expect(detector.findAllWinners(candidates)).toEqual([])
   })
 })
 
@@ -107,7 +107,7 @@ describe("GameEngine", () => {
 
     expect(result.number).toBe(10)
     expect(result.position).toBe(1)
-    expect(result.winner).toBeNull()
+    expect(result.winners).toEqual([])
     expect(engine.getDrawnNumbers()).toEqual([10])
   })
 
@@ -122,7 +122,7 @@ describe("GameEngine", () => {
     const engine = createEngine()
     engine.startGame()
     expect(() => engine.drawNumber(0)).toThrow()
-    expect(() => engine.drawNumber(91)).toThrow()
+    expect(() => engine.drawNumber(100)).toThrow()
     expect(() => engine.drawNumber(-1)).toThrow()
   })
 
@@ -133,9 +133,9 @@ describe("GameEngine", () => {
     engine.drawNumber(20)
     const result = engine.drawNumber(30)
 
-    expect(result.winner).not.toBeNull()
-    expect(result.winner!.cardId).toBe(1)
-    expect(result.winner!.foundCount).toBe(3)
+    expect(result.winners.length).toBe(1)
+    expect(result.winners[0].cardId).toBe(1)
+    expect(result.winners[0].foundCount).toBe(3)
     expect(engine.isFinished()).toBe(false)
   })
 

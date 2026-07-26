@@ -5,12 +5,13 @@ export class WinnerDetector {
     return foundCount >= totalCount
   }
 
-  findWinner(candidates: CardRanking[]): CardRanking | null {
+  findAllWinners(candidates: CardRanking[], dismissedIds?: Set<number>): CardRanking[] {
+    const result: CardRanking[] = []
     for (const c of candidates) {
-      if (c.foundCount >= c.totalCount) {
-        return c
+      if (c.foundCount >= c.totalCount && !dismissedIds?.has(c.cardId)) {
+        result.push(c)
       }
     }
-    return null
+    return result
   }
 }

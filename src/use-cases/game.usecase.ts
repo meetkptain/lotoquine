@@ -70,8 +70,8 @@ export async function drawNumber(
 
   await drawRepo.add(gameId, number, result.position)
 
-  if (result.winner) {
-    await gameRepo.finishGame(gameId, result.winner.cardId)
+  if (result.winners.length > 0) {
+    await gameRepo.finishGame(gameId, result.winners[0].cardId)
   }
 
   return result
@@ -110,8 +110,8 @@ export async function finishGame(
   engine: GameEngine
 ): Promise<void> {
   const state = engine.getState()
-  if (state.winner) {
-    await gameRepo.finishGame(engine.getGameId(), state.winner.cardId)
+  if (state.winners.length > 0) {
+    await gameRepo.finishGame(engine.getGameId(), state.winners[0].cardId)
   }
 }
 
